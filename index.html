@@ -875,13 +875,28 @@
       scoreLabelEl.textContent = `正解 ${state.correct} / ${state.total} 問`;
     }
 
+    function resolveEraseTarget() {
+      if (activeCellInput && calculationEl.contains(activeCellInput)) {
+        return activeCellInput;
+      }
+      const focused = document.activeElement;
+      if (focused && focused.matches && focused.matches("#calculation input")) {
+        return focused;
+      }
+      // マスが選ばれていないときは、最後に入れた数字（右から入力するので、いちばん左の入力済みマス）を消す
+      const filled = [...calculationEl.querySelectorAll(".answer-input")].filter((input) => input.value !== "");
+      return filled.length > 0 ? filled[0] : null;
+    }
+
     function eraseOneCharacter() {
-      if (!activeCellInput || !calculationEl.contains(activeCellInput)) {
+      const target = resolveEraseTarget();
+      if (!target) {
         setMessage("けしたいマスをタップしてから、⌫を押してね。", "notice");
         return;
       }
-      activeCellInput.value = "";
-      activeCellInput.focus();
+      target.value = "";
+      target.focus();
+      activeCellInput = target;
       clearResultStyle();
     }
 
