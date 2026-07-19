@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>筆算れんしゅう</title>
+  <style>
+    :root {
+      --sky: #dff3ff;
+      --sky-strong: #8bd3ff;
+      --sun: #fff0a8;
+      --sun-strong: #ffd86b;
+      --mint: #dff8dc;
+      --peach: #ffe3d7;
+      --ink: #2d3748;
+      --muted: #667085;
+      --line: #9bb4ca;
+      --card: rgba(255, 255, 255, 0.88);
+      --shadow: 0 22px 60px rgba(83, 118, 151, 0.22);
+      --radius: 24px;
+      --mono: "Courier New", "Yu Gothic", monospace;
+      --sans: "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--sans);
+      background:
+        radial-gradient(circle at 14% 16%, rgba(255, 240, 168, 0.95) 0 95px, transparent 96px),
+        radial-gradient(circle at 86% 12%, rgba(223, 248, 220, 0.9) 0 120px, transparent 121px),
+        linear-gradient(135deg, #eef9ff 0%, #fff9dc 48%, #f2ffe9 100%);
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    .app-header {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 22px;
+      text-align: center;
+    }
+
+    .badge {
+      justify-self: center;
+      padding: 7px 14px;
+      border: 2px solid rgba(255, 216, 107, 0.7);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: #7a5a00;
+      font-size: 0.92rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 4.4rem);
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.4vw, 1.2rem);
+      font-weight: 700;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel,
+    .practice-area {
+      border: 2px solid rgba(139, 211, 255, 0.5);
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .practice-area {
+      min-height: 520px;
+      padding: clamp(18px, 4vw, 34px);
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      color: #36506a;
+    }
+
+    .control-group + .control-group {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 2px dashed rgba(155, 180, 202, 0.45);
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice {
+      position: relative;
+      display: block;
+    }
+
+    .choice input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .choice span {
+      display: grid;
+      min-height: 54px;
+      place-items: center;
+      padding: 9px 10px;
+      border: 2px solid #c6d9eb;
+      border-radius: 16px;
+      background: #ffffff;
+      color: #39546c;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .choice input:checked + span {
+      border-color: var(--sky-strong);
+      background: linear-gradient(180deg, #e7f7ff, #ffffff);
+      box-shadow: inset 0 -4px 0 rgba(139, 211, 255, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .button-row {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .practice-area .button-row {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      width: min(560px, 100%);
+      margin: 18px auto 0;
+    }
+
+    button {
+      width: 100%;
+      min-height: 54px;
+      border: 0;
+      border-radius: 16px;
+      color: #223044;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.02);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .primary-btn {
+      background: linear-gradient(180deg, var(--sun), var(--sun-strong));
+      box-shadow: 0 10px 22px rgba(255, 191, 49, 0.28);
+    }
+
+    .check-btn {
+      background: linear-gradient(180deg, #dff8dc, #9fe7a4);
+      box-shadow: 0 10px 22px rgba(79, 184, 100, 0.2);
+    }
+
+    .clear-btn {
+      background: linear-gradient(180deg, #ffe3d7, #ffbfa6);
+      box-shadow: 0 10px 22px rgba(237, 139, 100, 0.2);
+    }
+
+    .hint {
+      margin: 16px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    .practice-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 26px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #eef8ff;
+      color: #315c7d;
+      font-weight: 900;
+    }
+
+    .score {
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .workspace {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      padding: 16px;
+      border-radius: 22px;
+      background:
+        linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.78)),
+        repeating-linear-gradient(0deg, transparent 0 39px, rgba(139, 211, 255, 0.2) 40px),
+        repeating-linear-gradient(90deg, transparent 0 39px, rgba(139, 211, 255, 0.16) 40px);
+    }
+
+    .calculation {
+      --cell: clamp(44px, 10vw, 72px);
+      display: grid;
+      grid-template-columns: 42px repeat(var(--columns), var(--cell));
+      grid-auto-rows: minmax(42px, auto);
+      gap: 6px;
+      align-items: center;
+      width: max-content;
+      max-width: 100%;
+      padding: clamp(12px, 3vw, 24px);
+      border: 3px solid rgba(255, 216, 107, 0.5);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .digit,
+    .operator,
+    .answer-input,
+    .memo-input {
+      font-family: var(--mono);
+      text-align: center;
+    }
+
+    .digit,
+    .operator {
+      font-size: clamp(2rem, 8vw, 3.8rem);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .operator {
+      color: #ed8b64;
+    }
+
+    .memo-input {
+      width: min(38px, 80%);
+      height: 34px;
+      justify-self: center;
+      border: 2px solid #ffd7a8;
+      border-radius: 10px;
+      background: #fff8e7;
+      color: #9a5b00;
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    .answer-input {
+      width: min(62px, 92%);
+      height: clamp(48px, 11vw, 66px);
+      justify-self: center;
+      border: 3px solid #9bc6e8;
+      border-radius: 14px;
+      background: #f7fcff;
+      color: #1f3448;
+      font-size: clamp(1.8rem, 7vw, 3rem);
+      font-weight: 900;
+      line-height: 1;
+      padding: 0;
+      caret-color: #ed8b64;
+    }
+
+    .answer-input:focus,
+    .memo-input:focus {
+      outline: 4px solid rgba(255, 216, 107, 0.45);
+      border-color: #ffbe5c;
+    }
+
+    .line {
+      grid-column: 1 / -1;
+      height: 5px;
+      border-radius: 999px;
+      background: #40556a;
+    }
+
+    .blank {
+      min-height: 1px;
+    }
+
+    .message {
+      min-height: 62px;
+      margin: 22px auto 0;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: #ffffff;
+      color: #40556a;
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 900;
+      text-align: center;
+      box-shadow: inset 0 0 0 2px rgba(155, 180, 202, 0.26);
+    }
+
+    .message.correct {
+      background: #efffec;
+      color: #24753b;
+      box-shadow: inset 0 0 0 2px rgba(95, 196, 112, 0.35);
+    }
+
+    .message.wrong {
+      background: #fff4e9;
+      color: #9a5426;
+      box-shadow: inset 0 0 0 2px rgba(255, 190, 92, 0.35);
+    }
+
+    .message.notice {
+      background: #eef8ff;
+      color: #315c7d;
+    }
+
+    .celebration {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .celebration.show {
+      animation: celebrationFade 1.55s ease both;
+    }
+
+    .success-stamp {
+      position: relative;
+      display: grid;
+      width: clamp(150px, 44vw, 240px);
+      aspect-ratio: 1;
+      place-items: center;
+      border: 7px solid #ffbe5c;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.95), transparent 34%),
+        linear-gradient(145deg, #fff7bf, #ffd7c8);
+      color: #e46e4f;
+      font-size: clamp(2rem, 8vw, 3.25rem);
+      font-weight: 900;
+      box-shadow: 0 22px 55px rgba(237, 139, 100, 0.26);
+      transform: scale(0.65) rotate(-8deg);
+    }
+
+    .celebration.show .success-stamp {
+      animation: stampPop 1.2s cubic-bezier(.2, 1.35, .32, 1) both;
+    }
+
+    .spark {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background: var(--color);
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.2);
+    }
+
+    .celebration.show .spark {
+      animation: sparkBurst 1.2s ease-out both;
+      animation-delay: var(--delay);
+    }
+
+    @keyframes celebrationFade {
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      10%,
+      84% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes stampPop {
+      0% {
+        transform: scale(0.45) rotate(-10deg);
+      }
+
+      38% {
+        transform: scale(1.08) rotate(4deg);
+      }
+
+      62% {
+        transform: scale(0.98) rotate(-2deg);
+      }
+
+      100% {
+        transform: scale(1) rotate(0deg);
+      }
+    }
+
+    @keyframes sparkBurst {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+      }
+
+      22% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        order: 2;
+      }
+
+      .practice-area {
+        order: 1;
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .page {
+        width: min(100% - 18px, 1120px);
+        padding-top: 18px;
+      }
+
+      .choice-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .practice-area .button-row {
+        gap: 8px;
+      }
+
+      .workspace {
+        padding: 8px;
+      }
+
+      .calculation {
+        grid-template-columns: 30px repeat(var(--columns), var(--cell));
+        gap: 4px;
+        padding: 10px;
+      }
+
+      .memo-input {
+        height: 30px;
+        font-size: 0.9rem;
+      }
+
+      .answer-input {
+        height: 42px;
+        border-width: 2px;
+        border-radius: 11px;
+        font-size: 1.45rem;
+      }
+
+      .digit,
+      .operator {
+        font-size: clamp(1.75rem, 7vw, 2.45rem);
+      }
+    }
+
+    @media (max-width: 380px) {
+      .calculation {
+        --cell: 40px;
+        grid-template-columns: 26px repeat(var(--columns), var(--cell));
+        padding: 8px;
+      }
+
+      .answer-input {
+        height: 38px;
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="app-header">
+      <div class="badge">めざせ！ひっさんマスター！！</div>
+      <h1>筆算れんしゅう</h1>
+      <p class="lead">たし算・ひき算を、1けたずつていねいにれんしゅうしよう。</p>
+    </header>
+
+    <div class="app-shell">
+      <aside class="panel" aria-label="問題の設定">
+        <section class="control-group">
+          <h2 class="section-title">計算のしゅるい</h2>
+          <div class="choice-grid">
+            <label class="choice">
+              <input type="radio" name="operation" value="add" checked>
+              <span>足し算</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="operation" value="subtract">
+              <span>引き算</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="control-group">
+          <h2 class="section-title">けた数</h2>
+          <div class="choice-grid">
+            <label class="choice">
+              <input type="radio" name="digits" value="2" checked>
+              <span>2桁 ± 2桁</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="digits" value="3">
+              <span>3桁 ± 3桁</span>
+            </label>
+          </div>
+        </section>
+
+        <p class="hint">
+          上の小さい四角には、くり上がりやくり下がりのメモを書けます。
+          答えは一のくらい（右はし）から、1けたずつ入れてください。
+          数字をなおしたいときは、その四角をタップしてそのまま入力してね。
+        </p>
+      </aside>
+
+      <section class="practice-area" aria-label="筆算のれんしゅう">
+        <div class="practice-top">
+          <div class="status-pill" id="modeLabel">足し算・2桁</div>
+          <div class="score" id="scoreLabel">正解 0 / 0 問</div>
+        </div>
+
+        <div class="workspace">
+          <div class="calculation" id="calculation" aria-label="筆算の問題"></div>
+        </div>
+
+        <div class="button-row">
+          <button class="primary-btn" id="newProblemButton" type="button">新しい問題</button>
+          <button class="clear-btn" id="clearButton" type="button">ぜんぶけす</button>
+          <button class="check-btn" id="checkButton" type="button">答え合わせ</button>
+        </div>
+
+        <div class="message notice" id="message" role="status">
+          「新しい問題」から始めよう。
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="celebration" id="celebration" aria-hidden="true">
+    <div class="success-stamp">できた！</div>
+    <span class="spark" style="--x: -120px; --y: -78px; --size: 18px; --color: #8bd3ff; --delay: 0s;"></span>
+    <span class="spark" style="--x: 118px; --y: -84px; --size: 16px; --color: #ffd86b; --delay: 0.03s;"></span>
+    <span class="spark" style="--x: -135px; --y: 42px; --size: 14px; --color: #9fe7a4; --delay: 0.06s;"></span>
+    <span class="spark" style="--x: 130px; --y: 38px; --size: 20px; --color: #ffb8a2; --delay: 0.02s;"></span>
+    <span class="spark" style="--x: -66px; --y: 118px; --size: 13px; --color: #b8a7ff; --delay: 0.08s;"></span>
+    <span class="spark" style="--x: 70px; --y: 116px; --size: 15px; --color: #8bd3ff; --delay: 0.1s;"></span>
+  </div>
+
+  <script>
+    const state = {
+      topNumber: 0,
+      bottomNumber: 0,
+      answer: 0,
+      operation: "add",
+      digits: 2,
+      total: 0,
+      correct: 0,
+      solvedCurrentProblem: false,
+      nextProblemTimer: null
+    };
+
+    const calculationEl = document.getElementById("calculation");
+    const messageEl = document.getElementById("message");
+    const modeLabelEl = document.getElementById("modeLabel");
+    const scoreLabelEl = document.getElementById("scoreLabel");
+    const newProblemButton = document.getElementById("newProblemButton");
+    const checkButton = document.getElementById("checkButton");
+    const clearButton = document.getElementById("clearButton");
+    const celebrationEl = document.getElementById("celebration");
+    let audioContext;
+
+    function randomNumberByDigits(digits) {
+      const min = Math.pow(10, digits - 1);
+      const max = Math.pow(10, digits) - 1;
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function selectedValue(name) {
+      return document.querySelector(`input[name="${name}"]:checked`).value;
+    }
+
+    function createProblem() {
+      if (state.nextProblemTimer) {
+        clearTimeout(state.nextProblemTimer);
+        state.nextProblemTimer = null;
+      }
+
+      state.operation = selectedValue("operation");
+      state.digits = Number(selectedValue("digits"));
+
+      let first = randomNumberByDigits(state.digits);
+      let second = randomNumberByDigits(state.digits);
+
+      // ときどき（約3割）片方を1桁小さい数にして、やさしい問題を混ぜる
+      if (Math.random() < 0.3) {
+        second = randomNumberByDigits(state.digits - 1);
+      }
+
+      if (state.operation === "subtract" && second > first) {
+        const temporary = first;
+        first = second;
+        second = temporary;
+      }
+
+      state.topNumber = first;
+      state.bottomNumber = second;
+      state.answer = state.operation === "add" ? first + second : first - second;
+      state.total += 1;
+      state.solvedCurrentProblem = false;
+
+      renderProblem();
+      setMessage("答えを入れて、答え合わせを押してね。", "notice");
+      updateLabels();
+
+      const answerInputs = document.querySelectorAll(".answer-input");
+      if (answerInputs.length > 0) {
+        answerInputs[answerInputs.length - 1].focus();
+      }
+    }
+
+    function renderProblem() {
+      const columns = state.operation === "add" ? state.digits + 1 : state.digits;
+      const operator = state.operation === "add" ? "+" : "-";
+      const topDigits = String(state.topNumber).padStart(columns, " ").split("");
+      const bottomDigits = String(state.bottomNumber).padStart(columns, " ").split("");
+
+      calculationEl.innerHTML = "";
+      calculationEl.style.setProperty("--columns", columns);
+
+      addBlankCell();
+      for (let index = 0; index < columns; index += 1) {
+        const memo = document.createElement("input");
+        memo.className = "memo-input";
+        memo.type = "text";
+        memo.inputMode = "numeric";
+        memo.maxLength = 1;
+        memo.setAttribute("aria-label", `${columns - index}桁目のメモ`);
+        calculationEl.appendChild(memo);
+      }
+
+      addBlankCell();
+      topDigits.forEach(addDigitCell);
+
+      const operatorCell = document.createElement("div");
+      operatorCell.className = "operator";
+      operatorCell.textContent = operator;
+      calculationEl.appendChild(operatorCell);
+      bottomDigits.forEach(addDigitCell);
+
+      const line = document.createElement("div");
+      line.className = "line";
+      calculationEl.appendChild(line);
+
+      addBlankCell();
+      for (let index = 0; index < columns; index += 1) {
+        const input = document.createElement("input");
+        input.className = "answer-input";
+        input.type = "text";
+        input.inputMode = "numeric";
+        input.maxLength = 1;
+        input.dataset.index = index;
+        input.setAttribute("aria-label", `${columns - index}桁目の答え`);
+        calculationEl.appendChild(input);
+      }
+
+      setupDigitInputs();
+    }
+
+    function addBlankCell() {
+      const blank = document.createElement("div");
+      blank.className = "blank";
+      calculationEl.appendChild(blank);
+    }
+
+    function addDigitCell(character) {
+      const cell = document.createElement("div");
+      cell.className = "digit";
+      cell.textContent = character === " " ? "" : character;
+      calculationEl.appendChild(cell);
+    }
+
+    function setupDigitInputs() {
+      const allInputs = calculationEl.querySelectorAll("input");
+      allInputs.forEach((input) => {
+        input.addEventListener("focus", () => {
+          input.select();
+        });
+
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/[^0-9]/g, "").slice(0, 1);
+          if (input.value && input.classList.contains("answer-input")) {
+            const previous = input.previousElementSibling;
+            if (previous && previous.classList.contains("answer-input")) {
+              previous.focus();
+            }
+          }
+          clearResultStyle();
+        });
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Backspace" && !input.value && input.classList.contains("answer-input")) {
+            const next = input.nextElementSibling;
+            if (next && next.classList.contains("answer-input")) {
+              next.focus();
+            }
+          }
+        });
+      });
+    }
+
+    function getUserAnswer() {
+      const answerInputs = Array.from(document.querySelectorAll(".answer-input"));
+      const answerText = answerInputs.map((input) => input.value || "0").join("");
+      return Number(answerText);
+    }
+
+    function hasAnyAnswer() {
+      return Array.from(document.querySelectorAll(".answer-input")).some((input) => input.value !== "");
+    }
+
+    function checkAnswer() {
+      if (!hasAnyAnswer()) {
+        setMessage("まずは答えを入れてみよう。", "notice");
+        return;
+      }
+
+      if (getUserAnswer() === state.answer) {
+        playCorrectSound();
+        showCelebration();
+        if (!state.solvedCurrentProblem) {
+          state.correct += 1;
+          state.solvedCurrentProblem = true;
+          scheduleNextProblem();
+        }
+        setMessage("正解！🎉 つぎの問題へ", "correct");
+      } else {
+        setMessage("おしい！もう一度考えてみよう", "wrong");
+      }
+      updateLabels();
+    }
+
+    function scheduleNextProblem() {
+      state.nextProblemTimer = setTimeout(() => {
+        state.nextProblemTimer = null;
+        createProblem();
+      }, 1600);
+    }
+
+    function showCelebration() {
+      celebrationEl.classList.remove("show");
+      void celebrationEl.offsetWidth;
+      celebrationEl.classList.add("show");
+    }
+
+    function playCorrectSound() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        return;
+      }
+
+      audioContext = audioContext || new AudioContextClass();
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      playBellTone(523.25, 0, 0.22, 0.16);
+      playBellTone(659.25, 0.14, 0.24, 0.17);
+      playBellTone(783.99, 0.3, 0.36, 0.18);
+    }
+
+    function playBellTone(frequency, startOffset, duration, volume) {
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, now + startOffset);
+      oscillator.frequency.exponentialRampToValueAtTime(frequency * 1.005, now + startOffset + duration);
+
+      gain.gain.setValueAtTime(0.0001, now + startOffset);
+      gain.gain.exponentialRampToValueAtTime(volume, now + startOffset + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(now + startOffset);
+      oscillator.stop(now + startOffset + duration + 0.03);
+    }
+
+    function setMessage(text, type) {
+      messageEl.textContent = text;
+      messageEl.className = `message ${type}`;
+    }
+
+    function clearResultStyle() {
+      if (messageEl.classList.contains("correct") || messageEl.classList.contains("wrong")) {
+        setMessage("答えを直したら、もう一度答え合わせしてね。", "notice");
+      }
+    }
+
+    function updateLabels() {
+      const operationText = state.operation === "add" ? "足し算" : "引き算";
+      modeLabelEl.textContent = `${operationText}・${state.digits}桁`;
+      scoreLabelEl.textContent = `正解 ${state.correct} / ${state.total} 問`;
+    }
+
+    function clearAllInputs() {
+      const inputs = calculationEl.querySelectorAll("input");
+      inputs.forEach((input) => {
+        input.value = "";
+      });
+      const answerInputs = calculationEl.querySelectorAll(".answer-input");
+      if (answerInputs.length > 0) {
+        answerInputs[answerInputs.length - 1].focus();
+      }
+      setMessage("ぜんぶ消したよ。もう一度チャレンジ！", "notice");
+    }
+
+    newProblemButton.addEventListener("click", createProblem);
+    checkButton.addEventListener("click", checkAnswer);
+    clearButton.addEventListener("click", clearAllInputs);
+
+    document.querySelectorAll('input[name="operation"], input[name="digits"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        createProblem();
+      });
+    });
+
+    createProblem();
+  </script>
+</body>
+</html>
