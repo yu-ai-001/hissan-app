@@ -199,6 +199,18 @@
       box-shadow: 0 10px 22px rgba(237, 139, 100, 0.2);
     }
 
+    .erase-btn {
+      width: auto;
+      min-height: 50px;
+      padding: 10px 26px;
+      border: 2px solid rgba(184, 167, 255, 0.55);
+      border-radius: 999px;
+      background: linear-gradient(180deg, #f1ecff, #d8ccff);
+      color: #4c3d8f;
+      font-size: 1.05rem;
+      box-shadow: 0 10px 22px rgba(140, 118, 220, 0.22);
+    }
+
     .hint {
       margin: 16px 0 0;
       color: var(--muted);
@@ -235,6 +247,7 @@
     .workspace {
       display: grid;
       place-items: center;
+      gap: 14px;
       min-height: 360px;
       padding: 16px;
       border-radius: 22px;
@@ -575,6 +588,7 @@
 
         <div class="workspace">
           <div class="calculation" id="calculation" aria-label="筆算の問題"></div>
+          <button class="erase-btn" id="eraseOneButton" type="button">⌫ 1もじけす</button>
         </div>
 
         <div class="button-row">
@@ -620,6 +634,8 @@
     const newProblemButton = document.getElementById("newProblemButton");
     const checkButton = document.getElementById("checkButton");
     const clearButton = document.getElementById("clearButton");
+    const eraseOneButton = document.getElementById("eraseOneButton");
+    let activeCellInput = null;
     const celebrationEl = document.getElementById("celebration");
     let audioContext;
 
@@ -859,6 +875,16 @@
       scoreLabelEl.textContent = `正解 ${state.correct} / ${state.total} 問`;
     }
 
+    function eraseOneCharacter() {
+      if (!activeCellInput || !calculationEl.contains(activeCellInput)) {
+        setMessage("けしたいマスをタップしてから、⌫を押してね。", "notice");
+        return;
+      }
+      activeCellInput.value = "";
+      activeCellInput.focus();
+      clearResultStyle();
+    }
+
     function clearAllInputs() {
       const inputs = calculationEl.querySelectorAll("input");
       inputs.forEach((input) => {
@@ -874,6 +900,19 @@
     newProblemButton.addEventListener("click", createProblem);
     checkButton.addEventListener("click", checkAnswer);
     clearButton.addEventListener("click", clearAllInputs);
+
+    // どのマスが選ばれているかを覚えておく
+    calculationEl.addEventListener("focusin", (event) => {
+      if (event.target.matches("input")) {
+        activeCellInput = event.target;
+      }
+    });
+
+    // ボタンを押してもマスのフォーカス（選択）が外れないようにする
+    eraseOneButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+    });
+    eraseOneButton.addEventListener("click", eraseOneCharacter);
 
     document.querySelectorAll('input[name="operation"], input[name="digits"]').forEach((input) => {
       input.addEventListener("change", () => {
